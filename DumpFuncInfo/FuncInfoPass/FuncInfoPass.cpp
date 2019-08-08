@@ -20,7 +20,11 @@ namespace {
       std::string info = F.getName().str();
       DISubprogram *subprog = F.getSubprogram();
       if (subprog) {
-        info += "," + subprog->getFilename().str();
+        info += "," + subprog->getDirectory().str() +
+          "," + subprog->getFilename().str();
+      } else {
+        // We do not have metadata for this function.
+        info += ",,";
       }
       bool internal = F.hasInternalLinkage() || F.hasPrivateLinkage();
       errs() << info << "," << internal << "\n";
