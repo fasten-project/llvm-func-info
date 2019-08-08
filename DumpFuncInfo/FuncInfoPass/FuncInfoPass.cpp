@@ -2,7 +2,6 @@
 
 #include "llvm/Pass.h"
 #include "llvm/IR/DebugInfoMetadata.h"
-#include "llvm/IR/Instructions.h"
 #include "llvm/IR/Function.h"
 #include "llvm/Support/raw_ostream.h"
 
@@ -11,6 +10,7 @@ using namespace llvm;
 
 
 namespace {
+
   struct FuncInfoPass : public FunctionPass {
     static char ID;
     FuncInfoPass():
@@ -22,7 +22,8 @@ namespace {
       if (subprog) {
         info += "," + subprog->getFilename().str();
       }
-      errs() << info << "\n";
+      bool internal = F.hasInternalLinkage() || F.hasPrivateLinkage();
+      errs() << info << "," << internal << "\n";
       return false;
     }
   };
