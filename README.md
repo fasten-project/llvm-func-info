@@ -19,5 +19,5 @@ inside the `build/FuncInfoPass` directory.
 ## Run pass
 
 ```shell
-opt --load build/FuncInfoPass/libLLVMFuncInfoPass.so -FuncInfoPass < <bitcode file>
+opt --load build/FuncInfoPass/libLLVMFuncInfoPass.so -FuncInfoPass -o /dev/null < <bitcode file>
 ```
