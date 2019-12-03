@@ -78,8 +78,8 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-
-for edge in $(python3 $dir/extract-edgelist.py); do
+project_dir=$(dirname $bitcode_file)
+for edge in $(python3 $dir/extract-edgelist.py $project_dir); do
   snode=$(echo $edge | cut -f1 -d ':')
   tnode=$(echo $edge | cut -f2 -d ':')
 
