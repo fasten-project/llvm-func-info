@@ -19,7 +19,7 @@ To build LLVM pass run:
 ```shell
 mkdir build
 cd build
-cmake -DLLVM_BUILD_DIR=<directory where LLVM is built> ..
+cmake ..
 make
 ```
 
