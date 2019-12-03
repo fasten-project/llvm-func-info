@@ -71,30 +71,43 @@ for func_entry in $(echo "$out" |
   fi
 done
 
-#wpa -dump-callgraph -ander $bitcode_file
+wpa -dump-callgraph -ander $bitcode_file
+
+if [ $? -ne 0 ]; then
+  echo "SVF produced an non-zero exit code"
+  exit 1
+fi
+
+
 for edge in $(python3 $dir/extract-edgelist.py); do
-  source=$(echo "$edge" | cut -f1 -d ' ')
-  target=$(echo "$edge" | cut -f2 -d ' ')
+  snode=$(echo $edge | cut -f1 -d ':')
+  tnode=$(echo $edge | cut -f2 -d ':')
 
-  source_info="${functions[$source]}"
-  target_info="${functions[$target]}"
+  snode_info="${functions[$snode]}"
+  tnode_info="${functions[$tnode]}"
 
-  lib_source=$(echo "$source_info" | cut -f1 -d ',')
-  static_source=$(echo "$source_info" | cut -f2 -d ',')
-
-  lib_target=$(echo "$target_info" | cut -f1 -d ',')
-  static_target=$(echo "$target_info" | cut -f2 -d ',')
-
-  if [ $static_source -eq 0 ]; then
-    static_source="public"
-  else
-    static_source="static"
-  fi
-  if [ $static_target -eq 0 ]; then
-    static_target="public"
-  else
-    static_target="static"
+  if [ -z $tnode_info ]; then
+    # The target is an intrinsic function; so we omit it.
+    continue
   fi
 
-  echo "$static_source:$lib_source:$source $static_target:$lib_target:$target"
+  lib_snode=$(echo "$snode_info" | cut -f1 -d ',')
+  static_snode=$(echo "$snode_info" | cut -f2 -d ',')
+
+  lib_tnode=$(echo "$tnode_info" | cut -f1 -d ',')
+  static_tnode=$(echo "$tnode_info" | cut -f2 -d ',')
+
+  if [ $static_snode -eq 0 ]; then
+    static_snode="public"
+  else
+    static_snode="static"
+  fi
+
+  if [ $static_tnode -eq 0 ]; then
+    static_tnode="public"
+  else
+    static_tnode="static"
+  fi
+
+  echo "$static_snode:$lib_snode:$snode $static_tnode:$lib_tnode:$tnode"
 done
