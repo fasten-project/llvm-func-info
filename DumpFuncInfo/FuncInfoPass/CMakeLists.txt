@@ -1,3 +1,3 @@
-add_library( LLVMFuncInfoPass MODULE
-    FuncInfoPass.cpp
+add_library(LLVMFuncInfoPass MODULE
+  FuncInfoPass.cpp
 )

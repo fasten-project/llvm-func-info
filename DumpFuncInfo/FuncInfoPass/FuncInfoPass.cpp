@@ -3,40 +3,54 @@
 #include "llvm/Pass.h"
 #include "llvm/IR/DebugInfoMetadata.h"
 #include "llvm/IR/Function.h"
+#include "llvm/IR/Module.h"
 #include "llvm/Support/raw_ostream.h"
 
 
 using namespace llvm;
 
 
-namespace {
+namespace llvm {
 
-  struct FuncInfoPass : public FunctionPass {
-    static char ID;
-    FuncInfoPass():
-      FunctionPass(ID) {}
 
-    bool runOnFunction(Function &F) override {
-      std::string info = F.getName().str();
-      DISubprogram *subprog = F.getSubprogram();
-      if (subprog) {
-        info += "," + subprog->getDirectory().str() +
-          "," + subprog->getFilename().str();
-      } else {
-        // We do not have metadata for this function.
-        info += ",,";
-      }
-      bool internal = F.hasInternalLinkage() || F.hasPrivateLinkage();
-      errs() << info << "," << internal << "\n";
-      return false;
+struct FunctionInfoPass : public ModulePass {
+  static char ID;
+  FunctionInfoPass():
+    ModulePass(ID) {}
+
+  bool runOnModule(Module &M) override {
+    errs() << "function_name,function_type,directory,filename,static\n";
+    for (Function &F : M.getFunctionList()) {
+      dumpFunctionInfo(F);
+    } 
+    return false;
+  }
+
+  void dumpFunctionInfo(Function &F) {
+    if (F.isIntrinsic()) {
+      return;
     }
-  };
-}
+    std::string info = F.getName().str();
+    if (F.isDeclaration()) {
+      info += ",declaration,-,-"; 
+    }
+    DISubprogram *subprog = F.getSubprogram();
+    if (subprog) {
+      info += ",definition," + subprog->getDirectory().str() +
+        "," + subprog->getFilename().str();
+    }
+    bool internal = F.hasInternalLinkage() || F.hasPrivateLinkage();
+    errs() << info << "," << internal << "\n";
+  }
+};
 
 
-char FuncInfoPass::ID = 0;
-static RegisterPass<FuncInfoPass> X(
-    "FuncInfoPass",
-    "Pass that dumps function information defined in a bitcode file",
+} // namespace llvm
+
+
+char FunctionInfoPass::ID = 0;
+static RegisterPass<FunctionInfoPass> X(
+    "FunctionInfoPass",
+    "Pass that dumps function information",
     false /* Only looks at CFG */,
     false /* Analysis Pass */);
