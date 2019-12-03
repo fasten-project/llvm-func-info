@@ -62,5 +62,6 @@ while read -r func_entry; do
   done <<< $(echo "$slibs")
   if [ $found -eq 0 ]; then
     >&2 echo "Couldn't find symbol entry for function $func"
+    exit 1
   fi
 done
