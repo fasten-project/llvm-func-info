@@ -16,9 +16,10 @@ fi
 
 bitcode_file=$(realpath $1)
 opt_lib=$(realpath $2)
-out=$(opt-7 --load $opt_lib -FunctionInfoPass -o /dev/null < $bitcode_file 2>&1)
+out=$(opt --load $opt_lib -FunctionInfoPass -o /dev/null < $bitcode_file 2>&1)
 if [ $? -ne 0 ]; then
   echo "Optimisation pass exited with a non zero exit code"
+  echo $out
   exit 1
 fi
 
