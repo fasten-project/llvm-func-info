@@ -32,12 +32,12 @@ struct FunctionInfoPass : public ModulePass {
     }
     std::string info = F.getName().str();
     if (F.isDeclaration()) {
-      info += ",declaration,-,-"; 
+      info += ",declaration,-"; 
     }
     DISubprogram *subprog = F.getSubprogram();
     if (subprog) {
       info += ",definition," + subprog->getDirectory().str() +
-        "," + subprog->getFilename().str();
+        "/" + subprog->getFilename().str();
     }
     bool internal = F.hasInternalLinkage() || F.hasPrivateLinkage();
     errs() << info << "," << internal << "\n";

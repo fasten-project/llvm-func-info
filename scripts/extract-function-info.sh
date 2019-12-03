@@ -1,5 +1,6 @@
 #! /bin/bash
 
+dir=$(dirname $0)
 bitcode_file=$1
 opt_lib=$2
 
@@ -38,14 +39,20 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-echo "$out" |
-grep -oP '[^ ]*,definition,[^ ]*' |
-sed 's/definition,//g'
+declare -A functions
 
-echo "$out" |
-grep -oP '[^ ]*,declaration,-[^ ]*' |
-sed -r 's/([a-zA-Z_0-9]+),declaration,.*(,[01])/\1\2/g' |
-while read -r func_entry; do
+for func_entry in $(echo "$out" |
+    grep -oP '[^ ]*,definition,[^ ]*' |
+    sed 's/definition,//g'); do
+  func=$(echo $func_entry | sed -r 's/([^,]*),.*/\1/')
+  info=$(echo $func_entry | sed -r 's/[^,]*,(.*)/\1/')
+  functions["$func"]="$info"
+done
+
+
+for func_entry in $(echo "$out" |
+    grep -oP '[^ ]*,declaration,-[^ ]*' |
+    sed -r 's/([a-zA-Z_0-9]+),declaration,.*(,[01])/\1\2/g'); do
   func=$(echo $func_entry | sed -r 's/(.*),[01]/\1/')
   static=$(echo $func_entry | sed -r 's/.*([01])/\1/')
   found=1
@@ -53,9 +60,7 @@ while read -r func_entry; do
     if [[ "$lib" =~ ^/.*  ]]; then
       if nm -D $lib | grep -q $func; then
         found=1
-        baselib=$(basename $lib)
-        dirlib=$(dirname $lib)
-        echo "$func,$dirlib,$baselib,$static"
+        functions["$func"]="$lib,$static"
         break
       fi
     fi
@@ -64,4 +69,32 @@ while read -r func_entry; do
     >&2 echo "Couldn't find symbol entry for function $func"
     exit 1
   fi
+done
+
+#wpa -dump-callgraph -ander $bitcode_file
+for edge in $(python3 $dir/extract-edgelist.py); do
+  source=$(echo "$edge" | cut -f1 -d ' ')
+  target=$(echo "$edge" | cut -f2 -d ' ')
+
+  source_info="${functions[$source]}"
+  target_info="${functions[$target]}"
+
+  lib_source=$(echo "$source_info" | cut -f1 -d ',')
+  static_source=$(echo "$source_info" | cut -f2 -d ',')
+
+  lib_target=$(echo "$target_info" | cut -f1 -d ',')
+  static_target=$(echo "$target_info" | cut -f2 -d ',')
+
+  if [ $static_source -eq 0 ]; then
+    static_source="public"
+  else
+    static_source="static"
+  fi
+  if [ $static_target -eq 0 ]; then
+    static_target="public"
+  else
+    static_target="static"
+  fi
+
+  echo "$static_source:$lib_source:$source $static_target:$lib_target:$target"
 done
