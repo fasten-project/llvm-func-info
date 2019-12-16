@@ -71,7 +71,7 @@ for func_entry in $(echo "$out" |
   fi
 done
 
-wpa -dump-callgraph -fspta $bitcode_file > /dev/null
+wpa -dump-callgraph -ander $bitcode_file > /dev/null
 
 if [ $? -ne 0 ]; then
   echo "SVF produced an non-zero exit code"
